@@ -13,7 +13,7 @@ import { useAppointments } from "../contexts/AppointmentsContext";
 import { useServices } from "../contexts/ServicesContext";
 import { useAuth } from "../contexts/AuthContext";
 import { addPet } from "../services/petService";
-import { createAppointment } from "../services/appointmentService";
+import { createAppointment, getBookedSlots } from "../services/appointmentService";
 import { getTimeSlots, type TimeSlotGroup } from "../services/timeSlotService";
 import {
   EyeToggle,
@@ -49,6 +49,7 @@ export default function BookingPage() {
   const [wizAddress, setWizAddress] = useState("");
   const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
   const [timeSlotGroups, setTimeSlotGroups] = useState<TimeSlotGroup[]>([]);
+  const [globalBookedSlots, setGlobalBookedSlots] = useState<Set<string>>(new Set());
   const [bookingId, setBookingId] = useState("");
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
@@ -73,17 +74,46 @@ export default function BookingPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!selDay) {
+      setGlobalBookedSlots(new Set());
+      return;
+    }
+
+    const dateStr = `${calYear}-${pad(calMonth + 1)}-${pad(selDay)}`;
+    let active = true;
+
+    getBookedSlots(dateStr)
+      .then((slots) => {
+        if (active) {
+          setGlobalBookedSlots(new Set(slots.map((slot) => `${slot.date}|${slot.time}`)));
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setGlobalBookedSlots(new Set());
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selDay, calYear, calMonth]);
+
   const firstDow = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const calCells = [...Array(firstDow).fill(null), ...Array.from({ length: daysInMonth }, (_, index) => index + 1)];
   const isPrevDis = calYear === today.getFullYear() && calMonth === today.getMonth();
 
-  const bookedSlots = useMemo(() => new Set(
+  const bookedSlots = useMemo(() => {
+    const merged = new Set(globalBookedSlots);
     appointments
-      // Preserve original behavior: only customer-visible appointments block booking.
       .filter((appointment) => appointment.status !== "cancelled" && appointment.address.trim().length > 0)
-      .map((appointment) => `${appointment.date}|${appointment.time}`),
-  ), [appointments]);
+      .forEach((appointment) => {
+        merged.add(`${appointment.date}|${appointment.time}`);
+      });
+    return merged;
+  }, [appointments, globalBookedSlots]);
 
   const step1Ready = !!petType && petName.trim().length > 0 && (petType !== "other" || customPetType.trim().length > 0);
   const step3Ready = !!selDay && !!selTime && !!selectedSlotId && wizAddress.trim().length > 0;
@@ -94,6 +124,14 @@ export default function BookingPage() {
 
   async function confirmBooking() {
     if (!selectedSvc || !selDay || !selTime || !selectedSlotId) return;
+
+    const selectedDateKey = `${calYear}-${pad(calMonth + 1)}-${pad(selDay)}`;
+    if (bookedSlots.has(`${selectedDateKey}|${selTime}`)) {
+      const message = "Khung giờ này đã được đặt. Vui lòng chọn khung giờ khác.";
+      setBookingError(message);
+      toast.error(message);
+      return;
+    }
 
     setIsBooking(true);
     setBookingError(null);
@@ -108,7 +146,7 @@ export default function BookingPage() {
       const createdAppointment = await createAppointment({
         serviceId: selectedSvc.id,
         petId: createdPet.id,
-        date: `${calYear}-${pad(calMonth + 1)}-${pad(selDay)}`,
+        date: selectedDateKey,
         slotId: selectedSlotId,
         address: wizAddress.trim(),
         vetName: loggedInName || VET_NAME,

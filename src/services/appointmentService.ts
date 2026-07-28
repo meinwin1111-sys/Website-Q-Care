@@ -46,6 +46,11 @@ export async function getAdminAppointments() {
   return (data ?? []).map(mapApiAppointmentToAppointment);
 }
 
+export async function getBookedSlots(date: string) {
+  const { data } = await api.get<{ date: string; time: string }[]>(`/appointments/booked-slots?date=${date}`);
+  return data ?? [];
+}
+
 export async function cancelAppointment(id: string, reason: string) {
   const { data } = await api.put<any>(`/appointments/${id}/cancel`, { cancelReason: reason });
   return mapApiAppointmentToAppointment(data);
