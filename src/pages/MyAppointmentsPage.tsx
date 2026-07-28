@@ -30,8 +30,9 @@ export default function MyAppointmentsPage() {
   const [editPetType, setEditPetType] = useState<string | null>(null);
   const [editPetName, setEditPetName] = useState("");
   const [editCustomPet, setEditCustomPet] = useState("");
-  const [editCalYear, setEditCalYear] = useState(2026);
-  const [editCalMonth, setEditCalMonth] = useState(6);
+  const today = new Date();
+  const [editCalYear, setEditCalYear] = useState(today.getFullYear());
+  const [editCalMonth, setEditCalMonth] = useState(today.getMonth());
   const [editSelDay, setEditSelDay] = useState<number | null>(null);
   const [editSelTime, setEditSelTime] = useState<string | null>(null);
   const [editAddress, setEditAddress] = useState("");
@@ -57,7 +58,7 @@ export default function MyAppointmentsPage() {
   const editFirstDow = new Date(editCalYear, editCalMonth, 1).getDay();
   const editDaysInMonth = new Date(editCalYear, editCalMonth + 1, 0).getDate();
   const editCalCells = [...Array(editFirstDow).fill(null), ...Array.from({ length: editDaysInMonth }, (_, i) => i + 1)];
-  const isEditPrevDis = editCalYear === 2026 && editCalMonth === 6;
+  const isEditPrevDis = editCalYear === today.getFullYear() && editCalMonth === today.getMonth();
 
   const editBookedSlots = useMemo(() => new Set(
     customerAppointments

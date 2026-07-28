@@ -2,7 +2,7 @@ import { AlertTriangle, Check, CheckCircle2, ExternalLink, Pencil, Search, Trash
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { CHARCOAL, MINT, SLATE, STATUS_MAP, TODAY } from "../../data/mockData";
+import { CHARCOAL, MINT, SLATE, STATUS_MAP } from "../../data/mockData";
 import { useAppointments } from "../../contexts/AppointmentsContext";
 import type { Appointment } from "../../types";
 import { MiniCalendar, TimeSlotGrid, fmtDateStr, fmtDateVi, pad } from "./shared";
@@ -12,8 +12,9 @@ export default function AdminAppointmentsPanel() {
   const [adminApptSearch, setAdminApptSearch] = useState("");
   const [adminSelAppt, setAdminSelAppt] = useState<Appointment | null>(null);
   const [adminApptMode, setAdminApptMode] = useState<"view" | "edit" | "cancel">("view");
-  const [adminEditCalYear, setAdminEditCalYear] = useState(2026);
-  const [adminEditCalMonth, setAdminEditCalMonth] = useState(6);
+  const today = new Date();
+  const [adminEditCalYear, setAdminEditCalYear] = useState(today.getFullYear());
+  const [adminEditCalMonth, setAdminEditCalMonth] = useState(today.getMonth());
   const [adminEditDay, setAdminEditDay] = useState<number | null>(null);
   const [adminEditTime, setAdminEditTime] = useState<string | null>(null);
   const [adminCancelReason, setAdminCancelReason] = useState("");
@@ -23,8 +24,9 @@ export default function AdminAppointmentsPanel() {
   const adminApptFirstDow = new Date(adminEditCalYear, adminEditCalMonth, 1).getDay();
   const adminApptDaysInMonth = new Date(adminEditCalYear, adminEditCalMonth + 1, 0).getDate();
   const adminApptCalCells = [...Array(adminApptFirstDow).fill(null), ...Array.from({ length: adminApptDaysInMonth }, (_, i) => i + 1)];
-  const isAdminEditPrevDis = adminEditCalYear === 2026 && adminEditCalMonth === 6;
-  const todaySuccess = appointments.filter((item) => item.date === TODAY && item.status === "success").length;
+  const isAdminEditPrevDis = adminEditCalYear === today.getFullYear() && adminEditCalMonth === today.getMonth();
+  const todayKey = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  const todaySuccess = appointments.filter((item) => item.date === todayKey && item.status === "success").length;
 
   const filteredAdminAppts = useMemo(() => appointments.filter((appt) => {
     const query = adminApptSearch.toLowerCase();

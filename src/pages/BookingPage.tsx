@@ -37,12 +37,13 @@ export default function BookingPage() {
   const { appointments, addAppointment, refreshAppointments } = useAppointments();
   const { loggedInName } = useAuth();
 
+  const today = new Date();
   const [wizStep, setWizStep] = useState(1);
   const [petType, setPetType] = useState<string | null>(null);
   const [petName, setPetName] = useState("");
   const [customPetType, setCustomPetType] = useState("");
-  const [calYear, setCalYear] = useState(2026);
-  const [calMonth, setCalMonth] = useState(6);
+  const [calYear, setCalYear] = useState(today.getFullYear());
+  const [calMonth, setCalMonth] = useState(today.getMonth());
   const [selDay, setSelDay] = useState<number | null>(null);
   const [selTime, setSelTime] = useState<string | null>(null);
   const [wizAddress, setWizAddress] = useState("");
@@ -75,7 +76,7 @@ export default function BookingPage() {
   const firstDow = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
   const calCells = [...Array(firstDow).fill(null), ...Array.from({ length: daysInMonth }, (_, index) => index + 1)];
-  const isPrevDis = calYear === 2026 && calMonth === 6;
+  const isPrevDis = calYear === today.getFullYear() && calMonth === today.getMonth();
 
   const bookedSlots = useMemo(() => new Set(
     appointments

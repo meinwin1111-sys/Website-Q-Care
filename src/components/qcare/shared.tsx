@@ -44,8 +44,14 @@ export function getPetDisplay(type: string, customType: string) {
   return type === "other" ? (customType || "Khác") : getPetOpt(type).label;
 }
 
+function getTodayAtMidnight() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
 export function isDayDisabled(y: number, m: number, d: number) {
-  return new Date(y, m, d) < new Date(2026, 6, 7);
+  return new Date(y, m, d) < getTodayAtMidnight();
 }
 
 export function isValidEmail(email: string) {
@@ -221,6 +227,8 @@ export function MiniCalendar({
   onNext: () => void;
   onSelect: (day: number) => void;
 }) {
+  const today = getTodayAtMidnight();
+
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -240,8 +248,10 @@ export function MiniCalendar({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
         {cells.map((day, idx) => {
           if (!day) return <div key={idx} />;
-          const disabled = isDayDisabled(calY, calM, day);
+          const currentDate = new Date(calY, calM, day);
+          const disabled = currentDate < today;
           const isSelected = selD === day;
+          const isToday = !disabled && currentDate.getTime() === today.getTime();
           return (
             <button
               key={idx}
@@ -249,26 +259,29 @@ export function MiniCalendar({
               onClick={() => !disabled && onSelect(day)}
               style={{
                 aspectRatio: "1",
+                position: "relative",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: 7,
                 fontSize: 12,
-                fontWeight: 500,
-                border: "none",
-                backgroundColor: isSelected ? CHARCOAL : "transparent",
+                fontWeight: isSelected ? 700 : isToday ? 700 : 500,
+                border: isSelected ? "none" : isToday ? `1px solid ${MINT}` : "none",
+                backgroundColor: isSelected ? CHARCOAL : isToday ? `${MINT}24` : "transparent",
                 color: isSelected ? "#fff" : disabled ? "#CCC" : CHARCOAL,
                 cursor: disabled ? "not-allowed" : "pointer",
-                transition: "background 0.1s",
+                transition: "all 0.1s",
+                boxShadow: isToday && !isSelected ? `inset 0 0 0 1px ${MINT}` : "none",
               }}
               onMouseEnter={(e) => {
                 if (!disabled && !isSelected) e.currentTarget.style.backgroundColor = `${MINT}35`;
               }}
               onMouseLeave={(e) => {
-                if (!isSelected) e.currentTarget.style.backgroundColor = "transparent";
+                if (!isSelected) e.currentTarget.style.backgroundColor = isToday ? `${MINT}24` : "transparent";
               }}
             >
-              {day}
+              <span>{day}</span>
+              {isToday && !isSelected && <span style={{ position: "absolute", bottom: 3, width: 4, height: 4, borderRadius: "50%", backgroundColor: MINT }} />}
             </button>
           );
         })}

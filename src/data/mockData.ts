@@ -11,7 +11,13 @@ export const MINT = "#A3E4D7";
 export const CHARCOAL = "#2C2C2C";
 export const SLATE = "#7A7A7A";
 export const VET_NAME = "Nguyễn Văn Quang";
-export const TODAY = "2026-07-22";
+
+function padDatePart(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+const today = new Date();
+export const TODAY = `${today.getFullYear()}-${padDatePart(today.getMonth() + 1)}-${padDatePart(today.getDate())}`;
 
 export const SERVICES: Service[] = [
   { id:1, category:"spa", title:"Tắm Spa Premium", subtitle:"Tắm, sấy và massage thư giãn", price:250000, duration:"60–90 phút",

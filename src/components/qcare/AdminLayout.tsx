@@ -1,7 +1,7 @@
 import { Calendar, ChevronRight, LogOut, Scissors } from "lucide-react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 
-import { CHARCOAL, MINT, SLATE, TODAY } from "../../data/mockData";
+import { CHARCOAL, MINT, SLATE } from "../../data/mockData";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function AdminLayout() {
@@ -19,7 +19,7 @@ export default function AdminLayout() {
     "/admin/services": "Quản lý dịch vụ",
   };
 
-  const date = new Date(TODAY);
+  const date = new Date();
   const fmtLong = `${date.getDate()} Tháng ${date.getMonth() + 1}, ${date.getFullYear()}`;
   const currentTitle = pageTitles[location.pathname] ?? "Admin Panel";
 
