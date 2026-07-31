@@ -35,6 +35,8 @@ export interface Appointment {
   price: number;
   address: string;
   vet: string;
+  customer_phone?: string;
+  customer_address?: string;
 }
 
 export interface AdminAppt {

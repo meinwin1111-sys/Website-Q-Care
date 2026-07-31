@@ -26,8 +26,10 @@ function mapApiAppointmentToAppointment(raw: any): Appointment {
     time: raw.time,
     status: raw.status === "cancelled" ? "cancelled" : "success",
     price: Number(raw.price ?? 0),
-    address: raw.address || "",
+    address: raw.address ?? raw.customer_address ?? "",
     vet: raw.customerName || raw.vet || "",
+    customer_phone: raw.customer_phone ?? raw.customerPhone ?? "",
+    customer_address: raw.customer_address ?? raw.customerAddress ?? raw.address ?? "",
   };
 }
 

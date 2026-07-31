@@ -150,8 +150,23 @@ export default function AdminAppointmentsPanel() {
               {adminApptMode === "view" && (
                 <>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-                    {[{ label: "Mã lịch hẹn", value: adminSelAppt.id }, { label: "Khách hàng", value: adminSelAppt.vet }, { label: "Thú cưng", value: adminSelAppt.pet }, { label: "Dịch vụ", value: adminSelAppt.service }, { label: "Ngày hẹn", value: fmtDateStr(adminSelAppt.date) }, { label: "Giờ hẹn", value: adminSelAppt.time }].map((row) => (
-                      <div key={row.label} style={{ padding: "12px 16px", borderRadius: 12, backgroundColor: "#F9F9F9", border: "1px solid rgba(0,0,0,0.05)" }}>
+                    {[
+                      { label: "Mã lịch hẹn", value: adminSelAppt.id },
+                      { label: "Khách hàng", value: adminSelAppt.vet },
+                      { label: "Thú cưng", value: adminSelAppt.pet },
+                      { label: "Dịch vụ", value: adminSelAppt.service },
+                      { label: "Ngày hẹn", value: fmtDateStr(adminSelAppt.date) },
+                      { label: "Giờ hẹn", value: adminSelAppt.time },
+                      { label: "Số điện thoại", value: adminSelAppt.customer_phone || "Chưa cập nhật" },
+                      { label: "Địa chỉ", value: adminSelAppt.customer_address || "Chưa cập nhật", fullWidth: true },
+                    ].map((row) => (
+                      <div key={row.label} style={{
+                        padding: "12px 16px",
+                        borderRadius: 12,
+                        backgroundColor: "#F9F9F9",
+                        border: "1px solid rgba(0,0,0,0.05)",
+                        ...(row.fullWidth ? { gridColumn: "1 / -1" } : {}),
+                      }}>
                         <p style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: SLATE, marginBottom: 4 }}>{row.label}</p>
                         <p style={{ fontSize: 13.5, fontWeight: 600, color: CHARCOAL }}>{row.value}</p>
                       </div>
