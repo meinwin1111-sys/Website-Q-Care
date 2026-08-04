@@ -35,6 +35,11 @@ export async function register(name: string, email: string, phone: string, passw
   return { token: data.token, user };
 }
 
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const { data } = await api.put("/auth/change-password", { currentPassword, newPassword });
+  return data;
+}
+
 export function getStoredAuth() {
   if (typeof window === "undefined") return { token: null as string | null, user: null as User | null };
   const token = localStorage.getItem("qcare_token");

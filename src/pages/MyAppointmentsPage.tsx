@@ -45,7 +45,7 @@ export default function MyAppointmentsPage() {
   const sortedAppts = useMemo(() => [...customerAppointments].sort((a, b) => {
     const aDate = new Date(`${a.date}T${a.time || "00:00"}`).getTime();
     const bDate = new Date(`${b.date}T${b.time || "00:00"}`).getTime();
-    return bDate - aDate;
+    return aDate - bDate;
   }), [customerAppointments]);
 
   const displayedAppts = useMemo(() => sortedAppts.filter((appt) => {

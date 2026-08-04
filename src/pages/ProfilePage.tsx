@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 
 import { CHARCOAL, MINT, SLATE } from "../data/mockData";
 import { useAuth } from "../contexts/AuthContext";
+import { changePassword } from "../services/authService";
 import { getUserInitials, isValidEmail, validatePassword } from "../components/qcare/shared";
 
 export default function ProfilePage() {
@@ -29,6 +30,49 @@ export default function ProfilePage() {
   const [pwdConfirmErr, setPwdConfirmErr] = useState("");
   const [pwdSuccess, setPwdSuccess] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
+
+  const handleChangePassword = async () => {
+    setPwdCurrentErr("");
+    setPwdNewErr("");
+    setPwdConfirmErr("");
+
+    let valid = true;
+    if (!pwdCurrent) {
+      setPwdCurrentErr("Vui lòng nhập mật khẩu hiện tại");
+      valid = false;
+    }
+    const newError = validatePassword(pwdNew);
+    if (newError) {
+      setPwdNewErr(newError);
+      valid = false;
+    }
+    if (pwdNew !== pwdConfirm) {
+      setPwdConfirmErr("Mật khẩu xác nhận không khớp");
+      valid = false;
+    }
+    if (!valid) return;
+
+    try {
+      await changePassword(pwdCurrent, pwdNew);
+      setPwdSuccess(true);
+      setPwdCurrent("");
+      setPwdNew("");
+      setPwdConfirm("");
+      setTimeout(() => {
+        setShowChangePwd(false);
+        setPwdSuccess(false);
+      }, 2000);
+    } catch (error: unknown) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      if (message === "Mật khẩu hiện tại không đúng.") {
+        setPwdCurrentErr(message);
+      } else if (typeof message === "string") {
+        setPwdNewErr(message);
+      } else {
+        setPwdNewErr("Không thể đổi mật khẩu. Vui lòng thử lại.");
+      }
+    }
+  };
 
   return (
     <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none", backgroundColor: "#F7F7F5" }}>
@@ -96,19 +140,7 @@ export default function ProfilePage() {
                     {field.error && <p style={{ fontSize: 11, color: "#EF4444", marginTop: 4 }}>⚠ {field.error}</p>}
                   </div>
                 ))}
-                <button onClick={() => {
-                  let valid = true;
-                  if (!pwdCurrent) { setPwdCurrentErr("Vui lòng nhập mật khẩu hiện tại"); valid = false; }
-                  const newError = validatePassword(pwdNew);
-                  if (newError) { setPwdNewErr(newError); valid = false; }
-                  if (pwdNew !== pwdConfirm) { setPwdConfirmErr("Mật khẩu xác nhận không khớp"); valid = false; }
-                  if (!valid) return;
-                  setPwdSuccess(true);
-                  setPwdCurrent("");
-                  setPwdNew("");
-                  setPwdConfirm("");
-                  setTimeout(() => { setShowChangePwd(false); setPwdSuccess(false); }, 2000);
-                }} style={{ width: "100%", padding: "11px", borderRadius: 12, backgroundColor: MINT, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 700, color: CHARCOAL, fontFamily: "inherit" }}>Xác nhận đổi mật khẩu</button>
+                <button onClick={handleChangePassword} style={{ width: "100%", padding: "11px", borderRadius: 12, backgroundColor: MINT, border: "none", cursor: "pointer", fontSize: 13.5, fontWeight: 700, color: CHARCOAL, fontFamily: "inherit" }}>Xác nhận đổi mật khẩu</button>
               </div>
             )}
           </div>

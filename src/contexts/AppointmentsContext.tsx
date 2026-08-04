@@ -22,6 +22,14 @@ export function AppointmentsProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function sortAppointments(list: Appointment[]) {
+    return [...list].sort((a, b) => {
+      const aDate = new Date(`${a.date}T${a.time || "00:00"}`).getTime();
+      const bDate = new Date(`${b.date}T${b.time || "00:00"}`).getTime();
+      return aDate - bDate;
+    });
+  }
+
   async function refreshAppointments() {
     if (!isLoggedIn) {
       setAppointments([]);
@@ -33,7 +41,7 @@ export function AppointmentsProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       const data = role === "admin" ? await getAdminAppointments() : await getMyAppointments();
-      setAppointments(data);
+      setAppointments(sortAppointments(data));
     } catch (err: any) {
       setError(err?.response?.data?.message || "Không thể tải lịch hẹn.");
       setAppointments([]);
@@ -52,19 +60,19 @@ export function AppointmentsProvider({ children }: { children: ReactNode }) {
     error,
     refreshAppointments,
     addAppointment: (appointment) => {
-      setAppointments((prev) => [appointment, ...prev]);
+      setAppointments((prev) => sortAppointments([appointment, ...prev]));
     },
     updateAppointment: (id, updater) => {
-      setAppointments((prev) => prev.map((appointment) => (
+      setAppointments((prev) => sortAppointments(prev.map((appointment) => (
         appointment.id === id ? updater(appointment) : appointment
-      )));
+      ))));
     },
     cancelAppointment: async (id, reason) => {
       try {
         const updated = await cancelAppointmentApi(id, reason);
-        setAppointments((prev) => prev.map((appointment) => (
+        setAppointments((prev) => sortAppointments(prev.map((appointment) => (
           appointment.id === id ? updated : appointment
-        )));
+        ))));
       } catch (err: any) {
         setError(err?.response?.data?.message || "Không thể hủy lịch hẹn.");
         throw err;

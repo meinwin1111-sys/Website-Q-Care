@@ -28,10 +28,16 @@ export default function AdminAppointmentsPanel() {
   const todayKey = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
   const todaySuccess = appointments.filter((item) => item.date === todayKey && item.status === "success").length;
 
-  const filteredAdminAppts = useMemo(() => appointments.filter((appt) => {
-    const query = adminApptSearch.toLowerCase();
-    return !query || appt.id.toLowerCase().includes(query) || (appt.vet ?? "").toLowerCase().includes(query) || fmtDateStr(appt.date).includes(query);
-  }), [appointments, adminApptSearch]);
+  const filteredAdminAppts = useMemo(() => appointments
+    .filter((appt) => {
+      const query = adminApptSearch.toLowerCase();
+      return !query || appt.id.toLowerCase().includes(query) || (appt.vet ?? "").toLowerCase().includes(query) || fmtDateStr(appt.date).includes(query);
+    })
+    .sort((a, b) => {
+      const aDate = new Date(`${a.date}T${a.time || "00:00"}`).getTime();
+      const bDate = new Date(`${b.date}T${b.time || "00:00"}`).getTime();
+      return aDate - bDate;
+    }), [appointments, adminApptSearch]);
 
   function openAdminApptDetail(appt: Appointment) {
     setAdminSelAppt(appt);
