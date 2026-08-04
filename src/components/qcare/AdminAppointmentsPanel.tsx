@@ -10,6 +10,7 @@ import { MiniCalendar, TimeSlotGrid, fmtDateStr, fmtDateVi, pad } from "./shared
 export default function AdminAppointmentsPanel() {
   const { appointments, cancelAppointment, updateAppointment } = useAppointments();
   const [adminApptSearch, setAdminApptSearch] = useState("");
+  const [adminShowPast, setAdminShowPast] = useState(false);
   const [adminSelAppt, setAdminSelAppt] = useState<Appointment | null>(null);
   const [adminApptMode, setAdminApptMode] = useState<"view" | "edit" | "cancel">("view");
   const today = new Date();
@@ -28,16 +29,23 @@ export default function AdminAppointmentsPanel() {
   const todayKey = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
   const todaySuccess = appointments.filter((item) => item.date === todayKey && item.status === "success").length;
 
-  const filteredAdminAppts = useMemo(() => appointments
-    .filter((appt) => {
-      const query = adminApptSearch.toLowerCase();
-      return !query || appt.id.toLowerCase().includes(query) || (appt.vet ?? "").toLowerCase().includes(query) || fmtDateStr(appt.date).includes(query);
-    })
-    .sort((a, b) => {
-      const aDate = new Date(`${a.date}T${a.time || "00:00"}`).getTime();
-      const bDate = new Date(`${b.date}T${b.time || "00:00"}`).getTime();
-      return aDate - bDate;
-    }), [appointments, adminApptSearch]);
+  const filteredAdminAppts = useMemo(() => {
+    const query = adminApptSearch.toLowerCase();
+    const todayKey = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
+    return appointments
+      .filter((appt) => {
+        if (!adminShowPast && appt.date < todayKey) {
+          return false;
+        }
+        return !query || appt.id.toLowerCase().includes(query) || (appt.vet ?? "").toLowerCase().includes(query) || fmtDateStr(appt.date).includes(query);
+      })
+      .sort((a, b) => {
+        const aDate = new Date(`${a.date}T${a.time || "00:00"}`).getTime();
+        const bDate = new Date(`${b.date}T${b.time || "00:00"}`).getTime();
+        return aDate - bDate;
+      });
+  }, [appointments, adminApptSearch, adminShowPast, today]);
 
   function openAdminApptDetail(appt: Appointment) {
     setAdminSelAppt(appt);
@@ -99,11 +107,28 @@ export default function AdminAppointmentsPanel() {
 
         <div style={{ backgroundColor: "#fff", borderRadius: 20, border: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: 28, overflow: "hidden" }}>
           <div style={{ padding: "20px 28px 16px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 16, fontWeight: 700, color: CHARCOAL }}>Danh sách lịch hẹn</h2>
                 <p style={{ fontSize: 12, color: SLATE, marginTop: 2 }}>{filteredAdminAppts.length} lịch hẹn</p>
               </div>
+              <button
+                type="button"
+                onClick={() => setAdminShowPast((value) => !value)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 12,
+                  border: adminShowPast ? `1.5px solid ${MINT}` : "1.5px solid transparent",
+                  backgroundColor: adminShowPast ? "#F5FFFB" : "#F0F0EE",
+                  color: CHARCOAL,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                {adminShowPast ? "Ẩn lịch hẹn đã qua" : "Xem cả lịch hẹn đã qua"}
+              </button>
             </div>
             <div style={{ position: "relative", maxWidth: 440 }}>
               <Search size={14} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: SLATE, pointerEvents: "none" }} />
