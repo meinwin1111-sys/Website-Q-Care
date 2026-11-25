@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { useAuth } from "./AuthContext";
-import { cancelAppointment as cancelAppointmentApi, getAdminAppointments, getMyAppointments } from "../services/appointmentService";
+import { cancelAppointment as cancelAppointmentApi, getAdminAppointments, getMyAppointments, updateAppointmentApi } from "../services/appointmentService";
 import type { Appointment } from "../types";
 
 type AppointmentsContextValue = {
@@ -63,10 +63,28 @@ export function AppointmentsProvider({ children }: { children: ReactNode }) {
       setAppointments((prev) => sortAppointments([appointment, ...prev]));
     },
     updateAppointment: (id, updater) => {
-      setAppointments((prev) => sortAppointments(prev.map((appointment) => (
-        appointment.id === id ? updater(appointment) : appointment
-      ))));
-    },
+  setAppointments((prev) => {
+    let nextItem: any = null;
+    const mapped = prev.map((appointment) => {
+      if (appointment.id !== id) return appointment;
+      const updatedLocal = updater(appointment);
+      nextItem = updatedLocal;
+      return updatedLocal;
+    });
+    if (nextItem) {
+      void updateAppointmentApi(id, {
+        date: nextItem.date,
+        time: nextItem.time,
+        address: nextItem.address,
+      }).then((saved) => {
+        setAppointments((curr) => sortAppointments(curr.map((item) => (item.id === id ? saved : item))));
+      }).catch((err: any) => {
+        setError(err?.response?.data?.message || "Không thể cập nhật lịch hẹn.");
+      });
+    }
+    return sortAppointments(mapped);
+  });
+},
     cancelAppointment: async (id, reason) => {
       try {
         const updated = await cancelAppointmentApi(id, reason);

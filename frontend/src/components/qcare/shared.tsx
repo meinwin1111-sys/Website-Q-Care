@@ -18,6 +18,14 @@ export function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
+export function isTimeSlotPast(date: string, time: string, now: Date) {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
+  const slotDate = new Date(year, month - 1, day, hours, minutes);
+
+  return slotDate.getTime() <= now.getTime() + 15 * 60 * 1000;
+}
+
 export function fmtDateVi(y: number, m: number, d: number) {
   return `${pad(d)}/${pad(m + 1)}/${y}`;
 }
@@ -300,6 +308,7 @@ export function TimeSlotGrid({
   bookedSlots,
   timeSlotGroups,
   onSelectSlot,
+  now,
 }: {
   selDay: number | null;
   selTime: string | null;
@@ -309,13 +318,22 @@ export function TimeSlotGrid({
   bookedSlots: Set<string>;
   timeSlotGroups?: Array<{ label: string; slots: Array<{ id: number; time: string }> }>;
   onSelectSlot?: (slot: { id: number; time: string }) => void;
+  now?: Date;
 }) {
+  const currentNow = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
   if (!selDay) return <p style={{ fontSize: 12.5, color: "#CCC", textAlign: "center", padding: "28px 0" }}>Chọn ngày trước</p>;
 
   const groups = timeSlotGroups ?? TIME_SLOTS.map((group) => ({
     label: group.label,
     slots: group.times.map((time) => ({ id: 0, time })),
   }));
+  const dateStr = `${calY}-${pad(calM + 1)}-${pad(selDay)}`;
+  const isToday = dateStr === `${currentNow.getFullYear()}-${pad(currentNow.getMonth() + 1)}-${pad(currentNow.getDate())}`;
+  const slots = groups.flatMap((group) => group.slots);
+
+  if (isToday && slots.length > 0 && slots.every((slot) => isTimeSlotPast(dateStr, slot.time, currentNow))) {
+    return <p style={{ fontSize: 12.5, color: "#7A7A7A", textAlign: "center", padding: "28px 8px" }}>Không còn khung giờ phù hợp hôm nay. Vui lòng chọn ngày tiếp theo.</p>;
+  }
 
   return (
     <div style={{ overflowY: "auto", maxHeight: 250, scrollbarWidth: "none" }}>
@@ -325,16 +343,17 @@ export function TimeSlotGrid({
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 5 }}>
             {group.slots.map((slot) => {
               const time = slot.time;
-              const dateStr = `${calY}-${pad(calM + 1)}-${pad(selDay)}`;
               const booked = bookedSlots.has(`${dateStr}|${time}`);
-              const isSelected = selTime === time;
+              const isPast = isTimeSlotPast(dateStr, time, currentNow);
+              const disabled = booked || isPast;
+              const isSelected = selTime === time && !disabled;
               return (
                 <button
                   key={`${group.label}-${time}`}
-                  disabled={booked}
-                  title={booked ? "Khung giờ này đã được đặt" : ""}
+                  disabled={disabled}
+                  title={booked ? "Khung giờ này đã được đặt" : isPast ? "Khung giờ này đã qua hoặc không đủ thời gian chuẩn bị" : ""}
                   onClick={() => {
-                    if (!booked) {
+                    if (!disabled) {
                       onSelect(time);
                       onSelectSlot?.(slot);
                     }
@@ -345,17 +364,17 @@ export function TimeSlotGrid({
                     fontSize: 11.5,
                     fontWeight: 600,
                     border: `1.5px solid ${isSelected ? CHARCOAL : "transparent"}`,
-                    backgroundColor: isSelected ? CHARCOAL : booked ? "#F0F0F0" : "#F5F5F5",
-                    color: isSelected ? "#fff" : booked ? "#BBBBBB" : CHARCOAL,
-                    cursor: booked ? "not-allowed" : "pointer",
+                    backgroundColor: isSelected ? CHARCOAL : disabled ? "#F0F0F0" : "#F5F5F5",
+                    color: isSelected ? "#fff" : disabled ? "#BBBBBB" : CHARCOAL,
+                    cursor: disabled ? "not-allowed" : "pointer",
                     textDecoration: booked ? "line-through" : "none",
                     transition: "all 0.1s",
                   }}
                   onMouseEnter={(e) => {
-                    if (!booked && !isSelected) e.currentTarget.style.backgroundColor = `${MINT}35`;
+                    if (!disabled && !isSelected) e.currentTarget.style.backgroundColor = `${MINT}35`;
                   }}
                   onMouseLeave={(e) => {
-                    if (!isSelected && !booked) e.currentTarget.style.backgroundColor = "#F5F5F5";
+                    if (!isSelected && !disabled) e.currentTarget.style.backgroundColor = "#F5F5F5";
                   }}
                 >
                   {time}

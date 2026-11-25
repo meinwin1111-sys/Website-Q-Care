@@ -25,6 +25,7 @@ import {
   fmtPrice,
   getPetDisplay,
   getPetOpt,
+  isTimeSlotPast,
   pad,
 } from "../components/qcare/shared";
 
@@ -37,7 +38,8 @@ export default function BookingPage() {
   const { appointments, addAppointment, refreshAppointments } = useAppointments();
   const { loggedInName } = useAuth();
 
-  const today = new Date();
+  const [now, setNow] = useState(() => new Date());
+  const today = now;
   const [wizStep, setWizStep] = useState(1);
   const [petType, setPetType] = useState<string | null>(null);
   const [petName, setPetName] = useState("");
@@ -54,6 +56,21 @@ export default function BookingPage() {
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    if (!selDay || !selTime) return;
+
+    const selectedDate = `${calYear}-${pad(calMonth + 1)}-${pad(selDay)}`;
+    if (isTimeSlotPast(selectedDate, selTime, now)) {
+      setSelTime(null);
+      setSelectedSlotId(null);
+    }
+  }, [selDay, selTime, calYear, calMonth, now]);
 
   useEffect(() => {
     let active = true;
@@ -126,6 +143,15 @@ export default function BookingPage() {
     if (!selectedSvc || !selDay || !selTime || !selectedSlotId) return;
 
     const selectedDateKey = `${calYear}-${pad(calMonth + 1)}-${pad(selDay)}`;
+    if (isTimeSlotPast(selectedDateKey, selTime, new Date())) {
+      const message = "Khung giờ đã qua hoặc không còn đủ thời gian chuẩn bị. Vui lòng chọn khung giờ khác.";
+      setSelTime(null);
+      setSelectedSlotId(null);
+      setBookingError(message);
+      toast.error(message);
+      return;
+    }
+
     if (bookedSlots.has(`${selectedDateKey}|${selTime}`)) {
       const message = "Khung giờ này đã được đặt. Vui lòng chọn khung giờ khác.";
       setBookingError(message);
@@ -258,6 +284,7 @@ export default function BookingPage() {
                 onSelectSlot={(slot) => setSelectedSlotId(slot.id)}
                 bookedSlots={bookedSlots}
                 timeSlotGroups={timeSlotGroups}
+                now={now}
               />
             </div>
             <div style={{ marginBottom: 20 }}>

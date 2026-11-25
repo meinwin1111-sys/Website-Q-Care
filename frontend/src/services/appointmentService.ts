@@ -57,3 +57,8 @@ export async function cancelAppointment(id: string, reason: string) {
   const { data } = await api.put<any>(`/appointments/${id}/cancel`, { cancelReason: reason });
   return mapApiAppointmentToAppointment(data);
 }
+
+export async function updateAppointmentApi(id: string, payload: Record<string, any>) {
+const { data } = await api.put<any>(`/appointments/${id}`, payload);
+return mapApiAppointmentToAppointment(data);
+}
