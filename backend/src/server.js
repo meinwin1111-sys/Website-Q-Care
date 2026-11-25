@@ -13,13 +13,20 @@ const serviceController = require("./controllers/serviceController");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const configuredOrigins = new Set(
+  (process.env.CORS_ORIGINS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
 
 app.use(cors({
   origin: (origin, callback) => {
     const isLocalhostOrigin = /^http:\/\/localhost:\d+$/.test(origin || "");
     const isVercelOrigin = /^https:\/\/([a-z0-9-]+\.)*vercel\.app$/i.test(origin || "");
+    const isConfiguredOrigin = configuredOrigins.has(origin || "");
 
-    if (!origin || isLocalhostOrigin || isVercelOrigin) {
+    if (!origin || isLocalhostOrigin || isVercelOrigin || isConfiguredOrigin) {
       callback(null, true);
       return;
     }
